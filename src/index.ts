@@ -3,7 +3,7 @@ import { readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
 // Function to generate directory tree with dashes and vertical bars
-const generateDirectoryTree = (dir: string, prefix: string = ''): string => {
+export const generateDirectoryTree = (dir: string, prefix: string = ''): string => {
     const entries = readdirSync(dir);
     let result = '';
 
@@ -25,29 +25,28 @@ const generateDirectoryTree = (dir: string, prefix: string = ''): string => {
     return result;
 };
 
-// Generate directory structure from current directory
-const directoryTree = generateDirectoryTree(process.cwd());
+// Function to copy directory tree to clipboard
+export const copyDirectoryTreeToClipboard = (directoryTree: string) => {
+    const copyCommand = process.platform === 'win32' ? 'clip' : 'pbcopy';
 
-// Command to copy to clipboard
-const copyCommand = process.platform === 'win32' ? 'clip' : 'pbcopy';
+    // Execute the copy command
+    const child = exec(copyCommand, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.log('Directory structure copied to clipboard');
+    });
 
-// Execute the copy command
-const child = exec(copyCommand, (error, stdout, stderr) => {
-    if (error) {
-        console.error(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-    }
-    console.log('Directory structure copied to clipboard');
-});
-
-// Ensure stdin is not null before writing to it
-child.stdin?.write(directoryTree, 'utf-8', (err) => {
-    if (err) {
-        console.error(`stdin write error: ${err.message}`);
-    }
-    child.stdin?.end();
-}) ?? console.error('Failed to access stdin of the child process.');
+    // Ensure stdin is not null before writing to it
+    child.stdin?.write(directoryTree, 'utf-8', (err) => {
+        if (err) {
+            console.error(`stdin write error: ${err.message}`);
+        }
+        child.stdin?.end();
+    }) ?? console.error('Failed to access stdin of the child process.');
+};
